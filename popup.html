@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https://generativelanguage.googleapis.com; img-src 'self' data: blob:"/>
+<title>QRShield</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+<script src="jsqr.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0a09;--panel:#131110;--panel2:#1a1714;
+  --border:#2a2420;--border2:#38302a;
+  --accent:#ff6b2b;--accent2:#ff9500;
+  --green:#34d399;--red:#f87171;--yellow:#fbbf24;--orange:#fb923c;
+  --muted:#9a8a80;--muted2:#c0a890;--text:#f0e8e0;
+}
+html{height:100%;overflow:hidden}body{width:400px;height:600px;overflow:hidden;font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--bg);color:var(--text);display:flex;flex-direction:column;background-image:radial-gradient(ellipse 80% 40% at 20% 0%,rgba(255,107,43,.06),transparent 70%)}
+
+/* Header */
+.hd{display:flex;align-items:center;gap:8px;padding:12px 14px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
+.hd-logo{width:28px;height:28px;background:linear-gradient(135deg,rgba(255,107,43,.2),rgba(255,149,0,.1));border:1px solid rgba(255,107,43,.35);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 10px rgba(255,107,43,.15)}
+.hd-title{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;letter-spacing:-.3px}
+.hd-title span{background:linear-gradient(90deg,#ff6b2b,#ff9500);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hd-pill{display:flex;align-items:center;gap:4px;margin-left:auto;background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.2);border-radius:99px;padding:3px 8px;font-size:8px;color:var(--green);letter-spacing:.06em}
+.pulse{width:4px;height:4px;border-radius:50%;background:currentColor;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* Stats bar */
+.stats-bar{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-bottom:1px solid var(--border);flex-shrink:0}
+.sb{padding:8px 0;text-align:center;border-right:1px solid var(--border)}
+.sb:last-child{border-right:none}
+.sb-v{font-family:'Syne',sans-serif;font-size:17px;font-weight:700}
+.sb-l{font-size:7px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:1px}
+
+/* Tabs */
+.tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--panel)}
+.tab{flex:1;padding:8px 4px;text-align:center;font-size:10px;color:var(--muted2);cursor:pointer;transition:all .2s;border-bottom:2px solid transparent;letter-spacing:.03em}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);background:rgba(255,107,43,.04)}
+
+/* Content */
+.content{flex:1;overflow-y:auto;overflow-x:hidden;padding:12px;min-height:0}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* Upload zone */
+.upload-zone{border:2px dashed var(--border2);border-radius:10px;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;margin-bottom:10px}
+.upload-zone:hover,.upload-zone.drag{border-color:rgba(255,107,43,.5);background:rgba(255,107,43,.03)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
+.u-ic{width:38px;height:38px;background:linear-gradient(135deg,rgba(255,107,43,.12),rgba(255,149,0,.06));border:1px solid rgba(255,107,43,.25);border-radius:9px;display:flex;align-items:center;justify-content:center}
+.u-label{font-size:12px;color:var(--accent);font-weight:700}
+.u-sub{font-size:10px;color:var(--muted2)}
+.preview-img{width:100%;max-height:120px;object-fit:contain;border-radius:7px}
+
+/* Manual input */
+.m-input{width:100%;background:var(--panel2);border:1px solid var(--border2);border-radius:8px;padding:9px 11px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;transition:all .2s;margin-bottom:8px}
+.m-input:focus{border-color:rgba(255,107,43,.5);box-shadow:0 0 0 2px rgba(255,107,43,.08)}
+.m-input::placeholder{color:var(--muted)}
+.a-btn{width:100%;padding:9px;border-radius:8px;border:1px solid rgba(255,107,43,.4);color:var(--accent);background:linear-gradient(90deg,rgba(255,107,43,.08),rgba(255,149,0,.05));font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer;transition:all .2s;font-weight:600;margin-bottom:10px}
+.a-btn:hover{background:linear-gradient(90deg,rgba(255,107,43,.16),rgba(255,149,0,.1));box-shadow:0 0 14px rgba(255,107,43,.18)}
+.qt-label{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.qt-chips{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.qt-chip{font-size:8px;padding:3px 7px;background:var(--panel2);border:1px solid var(--border2);border-radius:5px;color:var(--muted2);cursor:pointer;transition:all .2s;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.danger-chip{color:#f87171!important;border-color:rgba(248,113,113,.3)!important}
+.safe-chip{color:var(--green)!important;border-color:rgba(52,211,153,.25)!important}
+.warn-chip{color:var(--yellow)!important;border-color:rgba(251,191,36,.25)!important}
+
+/* Result */
+.result-box{background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.result-url{padding:8px 10px;font-size:9px;word-break:break-all;line-height:1.5;border-bottom:1px solid var(--border)}
+.r-label{font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}
+.meter-row{display:flex;align-items:center;gap:10px;padding:10px}
+.meter-wrap{position:relative;width:90px;height:90px;flex-shrink:0}
+.meter-wrap svg{width:100%;height:100%;transform:rotate(-90deg)}
+.m-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.m-score{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;line-height:1}
+.m-risk{font-size:7px;color:var(--muted)}
+.risk-pill{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.1em;padding:2px 8px;border-radius:99px;margin-top:4px}
+.d-list{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
+.d-row{display:flex;align-items:center;gap:4px}
+.d-lbl{font-size:10px;color:var(--muted2);width:44px;font-weight:600;flex-shrink:0;text-transform:uppercase}
+.d-val{font-size:11px;color:rgba(240,232,224,.95);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.divider{height:1px;background:var(--border);margin:0 10px}
+.flags-section{padding:8px 10px}
+.flags-title{font-size:11px;color:var(--muted2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
+.flag-item{display:flex;align-items:flex-start;gap:6px;padding:5px 7px;border-radius:6px;margin-bottom:3px}
+.flag-dot{width:5px;height:5px;border-radius:50%;margin-top:2px;flex-shrink:0}
+.flag-name{font-size:8px;font-weight:600}
+.flag-msg{font-size:7px;color:var(--muted);margin-top:1px;line-height:1.4}
+.flag-sev{font-size:6px;padding:1px 5px;border-radius:99px;font-weight:700;margin-left:auto;flex-shrink:0}
+.advice-box{padding:8px 10px;margin:0 10px 10px;border-radius:7px}
+.advice-lbl{font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}
+.advice-text{font-size:14px;line-height:1.6;font-weight:600}
+
+/* AI box */
+.ai-box{border-top:1px solid var(--border);padding:10px;background:rgba(255,107,43,.02)}
+.ai-hd{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.ai-title{font-size:10px;color:var(--accent);font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.ai-conf{font-size:7px;padding:1px 6px;border-radius:99px;font-weight:700;margin-left:auto}
+.ai-verdict-row{display:flex;align-items:flex-start;gap:8px;padding:7px 9px;border-radius:7px;margin-bottom:7px}
+.ai-verdict-text{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;flex-shrink:0}
+.ai-summary{font-size:11px;color:var(--text);line-height:1.7}
+.ai-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:7px}
+.ai-cell{padding:5px 7px;background:var(--panel2);border:1px solid var(--border);border-radius:6px}
+.ai-cell-lbl{font-size:8px;color:var(--muted2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.ai-cell-val{font-size:11px;color:var(--text);font-weight:600}
+.ai-tip{padding:6px 8px;background:rgba(255,107,43,.06);border:1px solid rgba(255,107,43,.2);border-radius:6px;display:flex;gap:6px;align-items:flex-start}
+.ai-tip-text{font-size:11px;color:var(--text);line-height:1.7}
+
+/* Analyzing */
+.analyzing{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;gap:10px}
+.sp-wrap{position:relative;width:44px;height:44px}
+.sp{position:absolute;width:44px;height:44px;border-radius:50%;border:2px solid rgba(255,107,43,.1);border-top-color:var(--accent);animation:spin 1s linear infinite;box-shadow:0 0 12px rgba(255,107,43,.15)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sp-in{position:absolute;inset:6px;border-radius:50%;border:2px solid rgba(255,149,0,.06);border-top-color:rgba(255,149,0,.4);animation:spin .7s linear infinite reverse}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px;gap:8px;text-align:center}
+.empty-ic{width:44px;height:44px;background:linear-gradient(135deg,rgba(255,107,43,.08),rgba(255,149,0,.04));border:1px solid rgba(255,107,43,.2);border-radius:12px;display:flex;align-items:center;justify-content:center}
+
+/* History */
+.hist-item{display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:var(--panel2);margin-bottom:4px;cursor:pointer;transition:all .2s}
+.hist-item:hover{border-color:rgba(255,107,43,.25)}
+.hist-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.hist-empty{text-align:center;padding:24px;color:var(--muted);font-size:10px}
+.clr-btn{width:100%;margin-bottom:8px;padding:6px;border-radius:6px;border:1px solid rgba(248,113,113,.25);color:var(--red);background:rgba(248,113,113,.05);font-family:'JetBrains Mono',monospace;font-size:9px;cursor:pointer;transition:all .2s}
+.clr-btn:hover{background:rgba(248,113,113,.1)}
+
+/* Workflow diagram */
+.workflow{padding:4px 0}
+.wf-title{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;text-align:center}
+svg.workflow-svg{width:100%;height:auto;display:block}
+.wf-node{fill:var(--panel2);stroke:var(--border2);stroke-width:1.5;rx:6;ry:6}
+.wf-node-accent{fill:rgba(255,107,43,.1);stroke:rgba(255,107,43,.4);stroke-width:1.5}
+.wf-node-danger{fill:rgba(248,113,113,.08);stroke:rgba(248,113,113,.4);stroke-width:1.5}
+.wf-node-warn{fill:rgba(251,191,36,.08);stroke:rgba(251,191,36,.35);stroke-width:1.5}
+.wf-node-safe{fill:rgba(52,211,153,.08);stroke:rgba(52,211,153,.35);stroke-width:1.5}
+.wf-node-ai{fill:rgba(255,149,0,.08);stroke:rgba(255,149,0,.4);stroke-width:1.5}
+.wf-text{fill:var(--text);font-family:'JetBrains Mono',monospace;font-size:9px;text-anchor:middle;dominant-baseline:middle}
+.wf-text-sm{fill:var(--muted);font-family:'JetBrains Mono',monospace;font-size:7px;text-anchor:middle;dominant-baseline:middle}
+.wf-text-accent{fill:#ff6b2b;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;text-anchor:middle;dominant-baseline:middle}
+.wf-text-danger{fill:#f87171;font-family:'JetBrains Mono',monospace;font-size:9px;text-anchor:middle;dominant-baseline:middle}
+.wf-text-warn{fill:#fbbf24;font-family:'JetBrains Mono',monospace;font-size:9px;text-anchor:middle;dominant-baseline:middle}
+.wf-text-safe{fill:#34d399;font-family:'JetBrains Mono',monospace;font-size:9px;text-anchor:middle;dominant-baseline:middle}
+.wf-text-ai{fill:#ff9500;font-family:'JetBrains Mono',monospace;font-size:9px;text-anchor:middle;dominant-baseline:middle}
+.wf-arrow{stroke:var(--muted);stroke-width:1.2;fill:none;marker-end:url(#arr)}
+.wf-arrow-danger{stroke:rgba(248,113,113,.5);stroke-width:1.2;fill:none;marker-end:url(#arr-danger)}
+.wf-arrow-warn{stroke:rgba(251,191,36,.4);stroke-width:1.2;fill:none;marker-end:url(#arr-warn)}
+.wf-arrow-safe{stroke:rgba(52,211,153,.4);stroke-width:1.2;fill:none;marker-end:url(#arr-safe)}
+.wf-arrow-ai{stroke:rgba(255,149,0,.5);stroke-width:1.2;fill:none;stroke-dasharray:3,2;marker-end:url(#arr-ai)}
+.wf-badge{animation:glow 2s ease-in-out infinite}
+@keyframes glow{0%,100%{opacity:.8}50%{opacity:1}}
+
+/* err */
+.err-box{padding:7px 9px;border-radius:7px;border:1px solid rgba(248,113,113,.3);background:rgba(248,113,113,.06);font-size:8px;color:var(--red);margin-top:6px}
+</style>
+</head>
+<body>
+
+<div class="hd">
+  <div class="hd-logo">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path d="M12 2L4 6v6c0 5.5 3.6 10.5 8 11.75C16.4 22.5 20 17.5 20 12V6L12 2z" fill="rgba(255,107,43,.15)" stroke="#ff6b2b" stroke-width="1.3"/>
+      <path d="M8.5 12l2.5 2.5 5-5" stroke="#34d399" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <div>
+    <div class="hd-title">QR<span>Shield</span></div>
+    <div style="font-size:8px;color:var(--muted);letter-spacing:.08em">PHISHING DETECTOR</div>
+  </div>
+  <div class="hd-pill"><div class="pulse"></div>ACTIVE</div>
+</div>
+
+<div class="stats-bar">
+  <div class="sb"><div class="sb-v" id="st-total">0</div><div class="sb-l">Scans</div></div>
+  <div class="sb"><div class="sb-v" id="st-threats" style="color:var(--red)">0</div><div class="sb-l">Threats</div></div>
+  <div class="sb"><div class="sb-v" id="st-safe" style="color:var(--green)">0</div><div class="sb-l">Safe</div></div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" id="tab-scan" data-tab="scan">📷 Scan</div>
+  <div class="tab" id="tab-manual" data-tab="manual">🔗 URL</div>
+  <div class="tab" id="tab-result" data-tab="result">🛡 Result</div>
+  <div class="tab" id="tab-history" data-tab="history">🕐 History</div>
+  <div class="tab" id="tab-workflow" data-tab="workflow">⚡ Flow</div>
+</div>
+
+<div class="content" id="content">
+
+  <!-- SCAN TAB -->
+  <div id="pane-scan">
+    <div class="upload-zone" id="drop-zone" id="drop-zone-wrap"  >
+      <input type="file" accept="image/*" id="file-input"/>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+        <div class="u-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12l4-4 4 4"/></svg></div>
+        <div class="u-label">Upload or Drop QR Image</div>
+        <div class="u-sub">Right-click any QR on a webpage too</div>
+      </div>
+    </div>
+    <div id="scan-err" class="err-box" style="display:none"></div>
+    <div style="font-size:8px;color:var(--muted);margin-top:6px;line-height:1.6;padding:8px 10px;background:var(--panel);border:1px solid var(--border);border-radius:8px">
+      💡 <strong style="color:var(--text)">Tip:</strong> Right-click any QR code image on a webpage → <em style="color:var(--accent)">Scan with QRShield</em>
+    </div>
+  </div>
+
+  <!-- MANUAL TAB -->
+  <div id="pane-manual" style="display:none">
+    <input class="m-input" id="manual-in" type="url" placeholder="https://example.com…" />
+    <button class="a-btn" id="analyze-btn">Analyze URL</button>
+    <div class="qt-label">🔴 Dangerous</div>
+    <div class="qt-chips">
+      <div class="qt-chip danger-chip" data-url="http://paypa1-secure.tk/login?verify=account">paypa1-secure.tk</div>
+      <div class="qt-chip danger-chip" data-url="http://192.168.1.1/admin/login">IP address host</div>
+      <div class="qt-chip danger-chip" data-url="http://amaz0n-prize-claim.xyz/winner">amaz0n prize</div>
+    </div>
+    <div class="qt-label" style="margin-top:8px">🟢 Safe</div>
+    <div class="qt-chips">
+      <div class="qt-chip safe-chip" data-url="https://google.com">google.com</div>
+      <div class="qt-chip safe-chip" data-url="https://github.com">github.com</div>
+    </div>
+    <div id="manual-err" class="err-box" style="display:none"></div>
+  </div>
+
+  <!-- RESULT TAB -->
+  <div id="pane-result" style="display:none">
+    <div id="result-content">
+      <div class="empty-state">
+        <div class="empty-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.2"><path d="M12 2L4 6v6c0 5.5 3.6 10.5 8 11.75C16.4 22.5 20 17.5 20 12V6L12 2z"/><path d="M8.5 12l2.5 2.5 5-5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700">No scan yet</div>
+        <div style="font-size:10px;color:var(--muted2);line-height:1.6">Upload a QR image or paste a URL to see the full AI-powered analysis here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY TAB -->
+  <div id="pane-history" style="display:none">
+    <div id="hist-list"></div>
+  </div>
+
+  <!-- WORKFLOW TAB -->
+  <div id="pane-workflow" style="display:none">
+    <div class="wf-title">QRShield Detection Pipeline</div>
+    <svg class="workflow-svg" viewBox="0 0 370 520" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L6,3 z" fill="var(--muted)"/>
+        </marker>
+        <marker id="arr-danger" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L6,3 z" fill="rgba(248,113,113,.6)"/>
+        </marker>
+        <marker id="arr-warn" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L6,3 z" fill="rgba(251,191,36,.5)"/>
+        </marker>
+        <marker id="arr-safe" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L6,3 z" fill="rgba(52,211,153,.5)"/>
+        </marker>
+        <marker id="arr-ai" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L6,3 z" fill="rgba(255,149,0,.6)"/>
+        </marker>
+        <filter id="glow-orange">
+          <feGaussianBlur stdDeviation="2" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glow-red">
+          <feGaussianBlur stdDeviation="1.5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      <!-- ── ROW 1: Input sources ── -->
+      <!-- QR Upload node -->
+      <rect x="20" y="10" width="90" height="36" rx="7" class="wf-node-accent"/>
+      <text x="65" y="23" class="wf-text-accent" font-size="8">📷 QR Image</text>
+      <text x="65" y="36" class="wf-text-sm">Upload / Camera</text>
+
+      <!-- URL Input node -->
+      <rect x="140" y="10" width="90" height="36" rx="7" class="wf-node-accent"/>
+      <text x="185" y="23" class="wf-text-accent" font-size="8">🔗 URL Input</text>
+      <text x="185" y="36" class="wf-text-sm">Manual / Right-click</text>
+
+      <!-- Page Scan node -->
+      <rect x="260" y="10" width="90" height="36" rx="7" class="wf-node-accent"/>
+      <text x="305" y="23" class="wf-text-accent" font-size="8">🌐 Page Scan</text>
+      <text x="305" y="36" class="wf-text-sm">Context Menu</text>
+
+      <!-- Arrows → Agent -->
+      <line x1="65" y1="46" x2="65" y2="65" class="wf-arrow"/>
+      <line x1="185" y1="46" x2="185" y2="75" class="wf-arrow"/>
+      <line x1="305" y1="46" x2="305" y2="75" class="wf-arrow"/>
+      <line x1="65" y1="70" x2="183" y2="82" class="wf-arrow"/>
+      <line x1="305" y1="75" x2="187" y2="82" class="wf-arrow"/>
+
+      <!-- ── ROW 2: AGENT (central) ── -->
+      <rect x="120" y="82" width="130" height="42" rx="8" fill="rgba(255,107,43,.15)" stroke="#ff6b2b" stroke-width="2" filter="url(#glow-orange)"/>
+      <text x="185" y="97" class="wf-text-accent" font-size="11">🛡 AGENT</text>
+      <text x="185" y="112" class="wf-text-sm">QRShield Core</text>
+
+      <!-- Arrow → jsQR Decoder -->
+      <line x1="185" y1="124" x2="185" y2="142" class="wf-arrow"/>
+
+      <!-- ── ROW 3: jsQR Decoder ── -->
+      <rect x="120" y="142" width="130" height="36" rx="7" class="wf-node"/>
+      <text x="185" y="156" class="wf-text">⚙ jsQR Decoder</text>
+      <text x="185" y="168" class="wf-text-sm">Extract hidden URL</text>
+
+      <!-- Arrow → Rule Engine -->
+      <line x1="185" y1="178" x2="185" y2="196" class="wf-arrow"/>
+
+      <!-- ── ROW 4: Rule Engine ── -->
+      <rect x="100" y="196" width="170" height="42" rx="7" fill="rgba(255,149,0,.08)" stroke="rgba(255,149,0,.4)" stroke-width="1.5"/>
+      <text x="185" y="211" class="wf-text-ai">📋 Rule Engine</text>
+      <text x="185" y="226" class="wf-text-sm">14 checks · Score 0–100</text>
+
+      <!-- Arrow from Rule Engine → Gemini -->
+      <line x1="185" y1="238" x2="185" y2="256" class="wf-arrow-ai"/>
+
+      <!-- ── ROW 5: Gemini AI ── -->
+      <rect x="105" y="256" width="160" height="42" rx="7" fill="rgba(255,149,0,.12)" stroke="rgba(255,149,0,.5)" stroke-width="1.5" filter="url(#glow-orange)"/>
+      <text x="185" y="271" class="wf-text-ai">✨ Gemini AI</text>
+      <text x="185" y="286" class="wf-text-sm">Advanced Source · Deep analysis</text>
+
+      <!-- ── ROW 6: Verdict split ── -->
+      <!-- Arrow → Verdict hub -->
+      <line x1="185" y1="298" x2="185" y2="316" class="wf-arrow"/>
+      <rect x="145" y="316" width="80" height="30" rx="6" class="wf-node"/>
+      <text x="185" y="331" class="wf-text">⚖ Verdict</text>
+
+      <!-- Branch lines -->
+      <!-- Left → Threat -->
+      <path d="M155,346 L75,376" class="wf-arrow-danger"/>
+      <!-- Center → Warning -->
+      <path d="M185,346 L185,376" class="wf-arrow-warn"/>
+      <!-- Right → Clean -->
+      <path d="M215,346 L295,376" class="wf-arrow-safe"/>
+
+      <!-- ── ROW 7: Outcomes ── -->
+      <!-- THREAT -->
+      <rect x="20" y="376" width="110" height="38" rx="7" class="wf-node-danger" filter="url(#glow-red)"/>
+      <text x="75" y="391" class="wf-text-danger">⛔ THREAT</text>
+      <text x="75" y="403" class="wf-text-sm">DANGER / SUSPICIOUS</text>
+
+      <!-- WARNING -->
+      <rect x="140" y="376" width="90" height="38" rx="7" class="wf-node-warn"/>
+      <text x="185" y="391" class="wf-text-warn">⚠ WARNING</text>
+      <text x="185" y="403" class="wf-text-sm">CAUTION</text>
+
+      <!-- CLEAN -->
+      <rect x="240" y="376" width="110" height="38" rx="7" class="wf-node-safe"/>
+      <text x="295" y="391" class="wf-text-safe">✅ CLEAN</text>
+      <text x="295" y="403" class="wf-text-sm">SAFE</text>
+
+      <!-- ── ROW 8: Actions ── -->
+      <line x1="75" y1="414" x2="75" y2="432" class="wf-arrow-danger"/>
+      <line x1="185" y1="414" x2="185" y2="432" class="wf-arrow-warn"/>
+      <line x1="295" y1="414" x2="295" y2="432" class="wf-arrow-safe"/>
+
+      <!-- Save to History bar -->
+      <rect x="20" y="432" width="330" height="34" rx="7" class="wf-node"/>
+      <text x="185" y="445" class="wf-text">🗂 Save to History</text>
+      <text x="185" y="457" class="wf-text-sm">LocalStorage · Timestamp · AI result</text>
+
+      <!-- ── Legend ── -->
+      <rect x="10" y="478" width="350" height="36" rx="6" fill="rgba(255,255,255,.02)" stroke="var(--border)" stroke-width="1"/>
+      <circle cx="30" cy="496" r="4" fill="rgba(255,107,43,.5)"/>
+      <text x="38" y="499" class="wf-text-sm" text-anchor="start">Rule Engine</text>
+      <circle cx="105" cy="496" r="4" fill="rgba(255,149,0,.5)"/>
+      <text x="113" y="499" class="wf-text-sm" text-anchor="start">Gemini AI</text>
+      <circle cx="175" cy="496" r="4" fill="rgba(248,113,113,.6)"/>
+      <text x="183" y="499" class="wf-text-sm" text-anchor="start">Danger path</text>
+      <circle cx="250" cy="496" r="4" fill="rgba(52,211,153,.5)"/>
+      <text x="258" y="499" class="wf-text-sm" text-anchor="start">Safe path</text>
+      <line x1="315" y1="496" x2="330" y2="496" stroke="rgba(255,149,0,.5)" stroke-width="1.2" stroke-dasharray="3,2"/>
+      <text x="333" y="499" class="wf-text-sm" text-anchor="start">AI</text>
+    </svg>
+  </div>
+
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>

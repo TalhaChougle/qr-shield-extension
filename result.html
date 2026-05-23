@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https://generativelanguage.googleapis.com; img-src 'self' data: blob: *;"/>
+<title>QRShield — Scanning...</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0a09;--panel:#131110;--panel2:#1a1714;
+  --border:#2a2420;--border2:#38302a;
+  --accent:#ff6b2b;--accent2:#ff9500;
+  --green:#34d399;--red:#f87171;--yellow:#fbbf24;--orange:#fb923c;
+  --muted:#6b5c52;--muted2:#9c8070;--text:#f0e8e0;
+}
+body{background:var(--bg);background-image:radial-gradient(ellipse 60% 40% at 20% 0%,rgba(255,107,43,.07),transparent 70%);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;min-height:100vh;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:12px;padding:16px 24px;border-bottom:1px solid var(--border);background:rgba(19,17,16,.8);backdrop-filter:blur(8px)}
+.logo-ic{width:36px;height:36px;background:linear-gradient(135deg,rgba(255,107,43,.2),rgba(255,149,0,.1));border:1px solid rgba(255,107,43,.35);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 12px rgba(255,107,43,.15)}
+.logo-tx{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;letter-spacing:-.3px}
+.logo-tx span{background:linear-gradient(90deg,#ff6b2b,#ff9500);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.badge{font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
+.pill{display:flex;align-items:center;gap:5px;margin-left:auto;background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.2);border-radius:99px;padding:4px 12px;font-size:9px;color:var(--green)}
+.pulse{width:5px;height:5px;border-radius:50%;background:currentColor;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+.wrap{max-width:780px;margin:0 auto;padding:28px 20px;width:100%}
+
+/* Analyzing */
+.analyzing{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;gap:16px;text-align:center}
+.sp-wrap{position:relative;width:64px;height:64px}
+.sp{position:absolute;width:64px;height:64px;border-radius:50%;border:2px solid rgba(255,107,43,.1);border-top-color:var(--accent);animation:spin 1s linear infinite;box-shadow:0 0 16px rgba(255,107,43,.2)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sp-in{position:absolute;inset:9px;border-radius:50%;border:2px solid rgba(255,149,0,.06);border-top-color:rgba(255,149,0,.5);animation:spin .7s linear infinite reverse}
+
+/* Result layout */
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:600px){.result-grid{grid-template-columns:1fr}}
+
+.card{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.card-hd{padding:12px 16px;border-bottom:1px solid var(--border);font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.card-body{padding:16px}
+
+/* URL box */
+.r-url-box{padding:12px 14px;border-radius:10px;margin-bottom:14px}
+.r-label{font-size:8px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px}
+.r-url{font-size:11px;word-break:break-all;line-height:1.5}
+.r-open{float:right;background:none;border:1px solid var(--border2);border-radius:6px;padding:4px 8px;color:var(--muted2);font-size:9px;transition:all .2s;text-decoration:none;display:inline-block;cursor:pointer}
+.r-open:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Meter */
+.meter-sec{display:flex;align-items:center;gap:16px;margin-bottom:14px}
+.meter-wrap{position:relative;width:100px;height:100px;flex-shrink:0}
+.meter-wrap svg{width:100%;height:100%;transform:rotate(-90deg)}
+.m-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.m-score{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;line-height:1}
+.m-risk{font-size:9px;color:var(--muted);letter-spacing:.05em;margin-top:2px}
+.risk-pill{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.1em;padding:4px 12px;border-radius:99px;margin-top:8px}
+.d-list{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+.d-row{display:flex;align-items:center;gap:8px}
+.d-lbl{font-size:9px;color:var(--muted);width:48px;flex-shrink:0;text-transform:uppercase;letter-spacing:.04em}
+.d-val{font-size:9px;color:rgba(240,232,224,.6);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Flags */
+.flags-title{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.flag-item{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:8px;margin-bottom:5px}
+.flag-dot{width:6px;height:6px;border-radius:50%;margin-top:3px;flex-shrink:0}
+.flag-name{font-size:9px;font-weight:600}
+.flag-sev{font-size:7px;padding:1px 6px;border-radius:99px;font-weight:700;letter-spacing:.06em;margin-left:auto;flex-shrink:0}
+.flag-msg{font-size:8px;color:var(--muted);margin-top:2px;line-height:1.5}
+.safe-box{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:9px;border:1px solid rgba(52,211,153,.25);background:rgba(52,211,153,.05)}
+.advice-box{padding:12px 14px;border-radius:9px;margin-top:10px}
+.advice-lbl{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+.advice-text{font-size:10px;line-height:1.5}
+.divider{height:1px;background:var(--border);margin:10px 0}
+
+/* AI */
+.ai-hd{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.ai-title{font-size:9px;color:var(--accent);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.ai-conf{font-size:8px;padding:2px 8px;border-radius:99px;font-weight:700;margin-left:auto}
+.ai-verdict-row{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:9px;margin-bottom:10px}
+.ai-verdict-text{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;flex-shrink:0;line-height:1.2}
+.ai-summary{font-size:10px;color:var(--text);line-height:1.6}
+.ai-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.ai-cell{padding:8px 10px;background:var(--panel2);border:1px solid var(--border);border-radius:8px}
+.ai-cell-lbl{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.ai-cell-val{font-size:9px;color:var(--text)}
+.ai-tip{padding:10px 12px;background:rgba(255,107,43,.06);border:1px solid rgba(255,107,43,.2);border-radius:8px;display:flex;gap:8px;align-items:flex-start}
+.ai-tip-text{font-size:10px;color:var(--text);line-height:1.6}
+.ai-loading{display:flex;align-items:center;gap:10px;padding:16px}
+.ai-spin{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,107,43,.15);border-top-color:var(--accent);animation:spin 1s linear infinite;flex-shrink:0}
+
+/* QR Preview */
+.qr-preview{width:100%;max-height:200px;object-fit:contain;border-radius:8px;border:1px solid var(--border)}
+
+/* Error */
+.err-card{background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.3);border-radius:14px;padding:24px;text-align:center}
+.err-icon{font-size:32px;margin-bottom:12px}
+.err-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--red);margin-bottom:8px}
+.err-msg{font-size:10px;color:var(--muted);line-height:1.6}
+
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo-ic">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path d="M12 2L4 6v6c0 5.5 3.6 10.5 8 11.75C16.4 22.5 20 17.5 20 12V6L12 2z" fill="rgba(255,107,43,.15)" stroke="#ff6b2b" stroke-width="1.3"/>
+      <path d="M8.5 12l2.5 2.5 5-5" stroke="#34d399" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <div>
+    <div class="logo-tx">QR<span>Shield</span></div>
+    <div class="badge">Phishing Detector</div>
+  </div>
+  <div class="pill"><div class="pulse"></div>SCANNING</div>
+</div>
+
+<div class="wrap" id="main-wrap">
+  <div class="analyzing" id="analyzing-state">
+    <div class="sp-wrap"><div class="sp"></div><div class="sp-in"></div></div>
+    <div style="font-size:13px;color:var(--accent);font-weight:600">Decoding QR Code…</div>
+    <div style="font-size:10px;color:var(--muted)">Fetching image and extracting URL</div>
+  </div>
+</div>
+
+<script src="result.js"></script>
+</body>
+</html>
