@@ -120,4 +120,4 @@ qr-shield-extension/
 
 ## 👨‍💻 Author
 
-Built by **Danish** · Part of the QRShield project
+Built by **Talha** · Part of the QRShield project
