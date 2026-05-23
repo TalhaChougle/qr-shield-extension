@@ -20,7 +20,9 @@ Since this extension is not yet on the Chrome Web Store, install it manually in 
 
 ### Step 1 — Download
 
-Click the green **Code** button above → **Download ZIP** → Extract the folder
+[![Download ZIP](https://img.shields.io/badge/⬇%20Download%20Extension-ff6b2b?style=for-the-badge)](https://github.com/TalhaChougle/qr-shield-extension/archive/refs/heads/main.zip)
+
+Click the button above → a ZIP file downloads automatically → **Extract** the folder
 
 ### Step 2 — Enable Developer Mode
 
